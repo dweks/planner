@@ -1,0 +1,6 @@
+CRS		TITLE				TYPE		DUE
+222		Chapter 4			Reading		12/5
+
+TO DO:
+	length check each task member
+

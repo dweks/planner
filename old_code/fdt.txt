@@ -1,0 +1,156 @@
+
+void Interface::container()
+{
+	//CX = new Context;
+	CX act = fdt[0];
+
+	char tmp_inp[INPUT] = "DEFAULT";
+	char * entry = NULL;
+	char current_cx = 's';
+	char test_cx = '-';
+
+
+	bool first_run = true;
+	bool new_cx = false;
+	bool quit = false;
+
+	while(!quit)
+	{
+		if(first_run) first_run = false;
+	/*
+		if(new_cx || first_run)
+		{
+		//	CX->disp_title();
+			(this->*act)(entry, true);
+			first_run = false;
+		}
+	*/
+
+		//CX->action(entry, data);
+		(this->*act)(entry, new_cx);
+		if(entry) { delete [] entry; entry = NULL; }
+
+		switch(cmd.get(tmp_inp))
+		{
+			case -2: quit = true; break;
+
+			case -1: // Invalid
+			{
+				error("Invalid entry. ");
+				cout << "You entered: '" << tmp_inp << "'\n";
+				new_cx = false;
+			} break;
+
+			case 0: // Entry only
+			{ 
+				cpy_str(entry, tmp_inp, 0); 
+				new_cx = false;
+			} break;
+
+			case 1: // Command only
+			{ 
+				test_cx = cmd.cx_get();
+				new_cx = cx_test(current_cx, test_cx); 
+			} break;
+
+			case 2: // Command with entry
+			{
+				test_cx = cmd.cx_get();
+				new_cx = cx_test(current_cx, test_cx); 
+				cpy_str(entry, tmp_inp, 3);
+			} break;
+		}
+
+		if(!quit && new_cx)
+		{
+//			if(CX){ delete CX; CX = NULL; }
+//			cx_switch(CX, current_cx);
+			switch(current_cx)
+			{
+				case 'a': cout << current_cx; act = fdt[1]; break;
+				case 'e': cout << current_cx; act = fdt[2]; break;
+				case 'h': cout << current_cx; act = fdt[3]; break;
+				case 'q': cout << current_cx; act = fdt[4]; break;
+			}
+		}
+
+	}
+}
+// Interface class private data
+	private:
+		Data data;
+		Task * task;
+		typedef void (Interface::*CX)(char *& entry, bool new_cx); 
+		CX fdt[4] = 
+		{
+			&Interface::start, 
+			&Interface::add, 
+			&Interface::edit,
+			&Interface::help
+		};
+		//Context * CX;
+		Command cmd;
+		bool init;
+//////////////////////////////////////////////////////////////
+void Interface::start(char *& entry, bool new_cx)
+{
+	right_align("Entered start");
+	Start start_u;
+	if(new_cx)
+		start_u.disp_title();
+	if(entry)
+		cout << endl << entry << endl;
+}
+
+void Interface::add(char *& entry, bool new_cx)
+{
+	Add add_u;
+	right_align("Entered add");
+
+	if(new_cx)
+		add_u.disp_title();
+	if(!entry)
+		cout << "\nEnter new task:";
+	else
+	{
+		if(task) { delete task; task = NULL; }
+		task = new Task;
+
+		if(task->add(entry) == 0)
+		{
+			error("Not enough fields. ");
+			cerr << "You entered: " << entry << endl;
+		}
+		else
+		{
+			line('*', MAXWIDTH, false);
+			center("CONFIRM ADD", true);
+			line('*', MAXWIDTH, false);
+			task->disp();
+			if(confirm())
+			{
+				if(file.write_one(entry) == 0)
+				{
+					cerr 
+					<< "(!) Error adding task.\n"
+					<< "    Task file not found. " << endl;
+				}
+				else
+					cout << "\n* Task saved *";
+			}
+			else
+				cout << "\n* Task not saved *";
+		}
+	}
+	if(task) { delete task; task = NULL; }
+}
+
+void Interface::edit(char *& entry, bool new_cx)
+{
+	right_align("Entered edit");
+}
+void Interface::help(char *& entry, bool new_cx)
+{
+	right_align("Entered help");
+}
+
