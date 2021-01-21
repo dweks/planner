@@ -101,7 +101,7 @@ void Util::ralign(const char test_msg[])
 
 void Util::error(const char err_msg[])
 {
-	cerr <<"\n\033[1;31m × \033[0m" << err_msg << endl;
+	cerr <<"\n\033[1;31m × \033[0m" << err_msg;
 }
 
 void Util::success(const char succ_msg[])
