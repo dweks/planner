@@ -1,66 +1,84 @@
 #include "cmd.h"
+
 Command::Command(): cx('s') { } 
 Command::~Command() { } 
+
 Interface::Interface(): CX(NULL)
 {
-	if(file.is_init() == true)
+	if(data.is_init())
 		init = true;
 	else
 	{
 		if(initialize() == 1)
-		{
-			ralign("initialize() == 1");
-			file.set_init(true);
-		}
+			data.set_init(true);
 		else
 			error("INIT NOT SET");
 	}
 }
 Interface::~Interface() 
 { 
+  ralign("DELETING CX");
 	if(CX) { delete CX; CX = NULL; } 
 }
 
-int Command::get(char tmp_inp[])
+int Command::
+get(char tmp_inp[])
 {
-	cout << endl << "|" << cx << "|› ";
-	cin.get(tmp_inp, 50, '\n'); 
-	cin.ignore(100,'\n');
-	int len = strlen(tmp_inp);
+  /* ret key:
+    -3 = empty input
+    -2 = quit program
+    -1 = invalid entry
+     0 = entry only
+     1 = command only
+     2 = command with entry
+  */ 
+  int len = 0;
+  int ret = 0;
+  char cx_sig = toupper(cx);
 
-	// Test correct command input
-	if(len == 0)
-		return -1;
+	cout << endl << "|" << cx_sig << "|› ";
+	cin.get(tmp_inp, 50, '\n'); 
+  if(cin.fail())
+  {
+    cin.clear();
+    cin.ignore(100,'\n');
+    return -3;
+  }
+
+	cin.ignore(100,'\n');
+
+	len = strlen(tmp_inp);
+	if(len == 0) return -1;
 
 	if(tmp_inp[0] == '\\') 
-	{ 
-		if(len < 2) 
-			return -1; 
-		if(len == 2)
-		{
-			// Run through array to check for valid command
-			if(!chk_type(tmp_inp[1])) 
-				return -1; 
-
-			// Set context if valid command
-			if(cx == 'q')
-				return -2;
-
-			cx = tmp_inp[1];
-			return 1;
-		}
-		if(tmp_inp[2] != ' ' || len == 3)
-			return -1;
-
-		cx = tmp_inp[1];
-		return 2;
-	}
-	// Test correct entry input
-
-	return 0; // return as entry only by default
+  {
+    ret = cmd_type(tmp_inp, len);
+    if(cx == 'q' && ret != -1) return -2;
+  }
+	return ret; // return as entry only by default
 }
 
-bool Command::chk_type(char to_chk)
+int Command::
+cmd_type(char tmp_inp[], int len)
+{
+  // invalid: too short for command
+  if(len < 2 || len == 3) return -1; 
+
+  if(!is_valid_code(tmp_inp[1])) return -1;
+  if(len == 2) 
+  {
+    cx = tmp_inp[1];
+    return 1;
+  }
+  // invalid: first character after cmd code is not a space
+  if(tmp_inp[2] != ' ') return -1;
+
+  cx = tmp_inp[1];
+  return 2;
+}
+
+bool Command::
+is_valid_code(char to_chk)
 {
 	for(int i = 0; i < CMDS; ++i)
 	{
@@ -70,56 +88,63 @@ bool Command::chk_type(char to_chk)
 	return false;
 }
 
-char Command::cx_get() { return cx; }
+char Command::
+cx_get() { return cx; }
 
-int Interface::initialize()
+int Interface::
+initialize()
 {
-	char ** course_names;
-	int num_course;
-	char name_entry[7];
+	char ** course_names = NULL;
+	int num_courses;
+	char name_entry[8];
 	bool done = false;
 
+  header("INITIALIZE PROGRAM");
 	do
 	{
-		cout 
-		<< "FIRST RUN OF PROGRAM\n"
-		<< "Enter number of courses: ";
+    instr("Enter number of courses");
+    cout << " > ";
 
-		cin >> num_course;
+		cin >> num_courses;
 		cin.ignore(100, '\n');
 
-		course_names = new char*[num_course];
+		course_names = new char*[num_courses];
 		
 		// Get all course names
-		for(int i = 0; i < num_course; ++i)
+    instr("Name course...");
+		for(int i = 0; i < num_courses; ++i)
 		{
-			cout << "Enter course " << i + 1 << ": ";
-			cin.get(name_entry, 7, '\n');
+      cout << i + 1 << " > ";
+			cin.get(name_entry, 8, '\n');
 			cpy_str(course_names[i], name_entry);
 			cin.ignore(100, '\n');
 		}
+
 		// Print courses and confirm
-		for (int i = 0; i < num_course; ++i)
-			cout << "Course " << i + 1 << ": " << course_names[i] << endl;
+    instr("Verify entries");
+		for (int i = 0; i < num_courses; ++i)
+			cout << i + 1 << ": " << course_names[i] << endl;
 
 		cout << "\nCorrect?";
 		if(confirm())
 			done = true;
 		else
 		{
-			for(int i = 0; i < num_course; ++i)
+			for(int i = 0; i < num_courses; ++i)
 			{
 				delete [] course_names[i];
 				course_names[i] = NULL;
 			}
 		}
+
 	}while(!done);
 
 	// If file write is successful, delete array, set_init, and return success
-	if(file.write_courses(course_names, num_course) == 1)
+	if(data.write_courses(course_names, num_courses) == 1)
 	{
 		success("Files written succesfully.");
-		for(int i = 0; i < num_course; ++i)
+    data.create_course_files(course_names, num_courses);
+		for(int i = 0; i < num_courses; ++i)
 		{
 			delete [] course_names[i];
 			course_names[i] = NULL;
@@ -129,7 +154,9 @@ int Interface::initialize()
 	return 0;
 
 }
-void Interface::container()
+
+void Interface::
+container()
 {
 	CX = new Context;
 
@@ -142,6 +169,7 @@ void Interface::container()
 	bool new_cx = false;
 	bool quit = false;
 
+  // Main program loop
 	while(!quit)
 	{
 		if(new_cx || first_run)
@@ -151,16 +179,22 @@ void Interface::container()
 		}
 
 		CX->action(entry, data);
-		if(entry) { delete [] entry; entry = NULL; }
+
+		if(entry) 
+    { 
+      delete [] entry; 
+      entry = NULL; 
+    }
 
 		switch(cmd.get(tmp_inp))
 		{
+			case -3: break;
 			case -2: quit = true; break;
 
 			case -1: // Invalid
 			{
-				error("Invalid entry. ");
-				cout << "You entered: '" << tmp_inp << "'\n";
+				error("INVALID ENTRY");
+        show_entry(tmp_inp);
 				new_cx = false;
 			} break;
 
@@ -192,7 +226,8 @@ void Interface::container()
 	}
 }
 
-bool Interface::cx_test(char &current, const char test)
+bool Interface::
+cx_test(char &current, const char test)
 {
 	if(current != test)
 	{
@@ -203,7 +238,8 @@ bool Interface::cx_test(char &current, const char test)
 
 }
 
-void Interface::cx_switch(Context *& to_set, const char current_cx) 
+void Interface::
+cx_switch(Context *& to_set, const char current_cx) 
 {
 	switch(current_cx)
 	{

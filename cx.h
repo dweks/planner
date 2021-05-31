@@ -7,10 +7,8 @@ class Context: public Util
 		virtual ~Context();
 		virtual void disp_title();
 		virtual void action(char *& entry, Data & data);
-	protected:
-		File file;
 	private:
-		const char cx_title[6] = "Start";
+		const char cx_title[8] = "Planner";
 };
 
 class Add: public Context

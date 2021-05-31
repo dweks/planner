@@ -1,8 +1,10 @@
 #include "util.h"
-Util::Util() { }
 
+Util::Util() { }
 Util::~Util(){}
-void Util::pg_title(const char text[], const char ch)
+
+void Util::
+pg_title(const char text[], const char ch)
 {
 	int len = strlen(text);
 
@@ -15,29 +17,31 @@ void Util::pg_title(const char text[], const char ch)
 	cout << "┘" << endl;
 }
 
-void Util::line(char ch, int len, bool own_line) const
+void Util::
+line(char ch, int len, bool own_line) const
 {
-	if(own_line)
-		cout << endl;
+	if(own_line) cout << endl;
 	for(int i = 0; i < len; ++i)
 		cout << ch;
-	if(own_line)
-		cout << endl;
+	if(own_line) cout << endl;
 }
 
-void Util::spacer(int len)
+void Util::
+spacer(int len)
 {
 	for(int i = 0; i < len; ++i)
 		cout << ' ';
 }
 
-void Util::cpy_str(char *& dest, char source[], int offset)
+void Util::
+cpy_str(char *& dest, char source[], int offset)
 {
 	dest = new char[strlen(source + offset) + 1];
 	strcpy(dest, source + offset);
 }
 
-void Util::center(const char to_center[], bool own_line) 
+void Util::
+center(const char to_center[], bool own_line) 
 {
 	int len = strlen(to_center);
 	if(len % 2 != 0)
@@ -51,7 +55,8 @@ void Util::center(const char to_center[], bool own_line)
 		cout << endl;
 }
 
-void Util::header(const char text[], const char ch)
+void Util::
+header(const char text[], const char ch)
 {
 	int offset = 0;
 	int len = strlen(text);
@@ -60,13 +65,14 @@ void Util::header(const char text[], const char ch)
 	else
 		offset = 2;
 	cout << endl;
-	line(ch, (MAXWIDTH - len - 4) / 2, false);
+	line('=', (MAXWIDTH - len - 4) / 2, false);
 	cout << "[ " << text << " ]";
-	line(ch, (MAXWIDTH - len - offset) / 2, false);
+	line('=', (MAXWIDTH - len - offset) / 2, false);
 	cout << endl;
 }
 
-bool Util::confirm()
+bool Util::
+confirm()
 {
 	char choice;
 	bool done = true;
@@ -74,7 +80,7 @@ bool Util::confirm()
 	do
 	{
 		choice = '\0';
-		cout << "\ny/n > ";
+		cout << "\nY/N > ";
 		cin >> choice;
 		cin.ignore(100, '\n');
 		choice = tolower(choice);
@@ -92,19 +98,34 @@ bool Util::confirm()
 	return false;
 }
 
-void Util::ralign(const char test_msg[])
+void Util::
+ralign(const char test_msg[])
 {
 	cout << endl;
 	spacer(MAXWIDTH - strlen(test_msg));
 	cout << test_msg << endl;
 }
 
-void Util::error(const char err_msg[])
+void Util::
+error(const char err_msg[])
 {
-	cerr <<"\n\033[1;31m × \033[0m" << err_msg;
+	cerr << endl << "\033[1;31m× \033[0m" << err_msg << endl;
 }
 
-void Util::success(const char succ_msg[])
+void Util::
+show_entry(const char entry_to_print[])
+{
+  cout << "You entered: '" << entry_to_print << "'" << endl;
+}
+
+void Util::
+instr(const char msg[])
+{
+  cout << "\n∥ " << msg << endl;
+}
+
+void Util::
+success(const char succ_msg[])
 {
 	cout <<"\n\033[1;32m ✓ \033[0m" << succ_msg << endl;
 }
