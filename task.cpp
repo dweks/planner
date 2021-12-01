@@ -1,21 +1,33 @@
 #include "task.h"
-Task::Task(): course(NULL), title(NULL), type(NULL), date(NULL)
+Task::
+Task(): course(NULL), title(NULL), type(NULL) 
 {
 	id = 0;
 	complete = false;
 }
 
-Task::~Task() 
+Task::
+Task(const Task & to_copy)
+{
+  id = to_copy.id;
+  cpy_str(course, to_copy.course);
+  cpy_str(title, to_copy.title);
+  cpy_str(type, to_copy.type);
+
+  for(int i = 0; i < 3; ++i)
+    date[i] = to_copy.date[i];
+
+  for(int i = 0; i < 4; ++i)
+    field_loc[i] = to_copy.field_loc[i];
+}
+
+Task::
+~Task() 
 { 
 	id = 0;
-  ralign("DELETING Task:course");
 	if(course) { delete [] course; course = NULL; } 
-  ralign("DELETING Task:title");
 	if(title) { delete [] title; title = NULL; } 
-  ralign("DELETING Task:type");
 	if(type) { delete [] type; type = NULL; } 
-  ralign("DELETING Task:date");
-	if(date) { delete [] date; date = NULL; } 
 	complete = 0;
 }
 
@@ -26,6 +38,15 @@ disp_one(int type)
   {
     case 0: disp_type_0();
   }
+}
+
+int Task::
+get_date(int index)
+{
+  if(index == 0) return date[0];
+  if(index == 1) return date[1];
+  if(index == 2) return date[2];
+  return -1;
 }
 
 void Task::
@@ -44,74 +65,23 @@ disp_type_0()
   else cout << "-no info-";
 
   cout << "\nDate:    ";
-  if(date) cout << date;
-  else cout << "-no info-";
-
+  cout << date[0] << "-" << date[1] << "-" << date[2] << endl;
 }
 
 int Task::
 add(char to_parse[])
 {
-  char tmp_course[20] = {};
-  char tmp_title[20] = {};
-  char tmp_type[20] = {};
-  char tmp_date[20] = {};
-
+  if(!to_parse) return -1;
   int len = strlen(to_parse);
-  int i = 0;
   int pos = 0;
 
-  if(len == 0) return 0;
+  if(len == 0 || count_args(to_parse) == 0) return 0;
 
-	if(count_args(to_parse) == 0)
-		return 0;
+  pos = add_course(to_parse, pos);
+  pos = add_title(to_parse, pos);
+  pos = add_type(to_parse, pos);
+  pos = add_date(to_parse, pos);
  
-  while(to_parse[pos] != '|')
-  {
-    tmp_course[i] = to_parse[pos];
-    ++pos;
-    ++i;
-  }
-
-  cpy_str(course, tmp_course);
-  ++pos;
-  i = 0;
-  field_loc[0] = pos;
-
-  while(to_parse[pos] != '|')
-  {
-    tmp_title[i] = to_parse[pos];
-    ++pos;
-    ++i;
-  }
-
-  cpy_str(title, tmp_title);
-  ++pos;
-  i = 0;
-  field_loc[1] = pos;
-
-  while(to_parse[pos] != '|')
-  {
-    tmp_type[i] = to_parse[pos];
-    ++pos;
-    ++i;
-  }
-
-  cpy_str(type, tmp_type);
-  ++pos;
-  i = 0;
-  field_loc[2] = pos;
-
-  while(to_parse[pos] != '|')
-  {
-    tmp_date[i] = to_parse[pos];
-    ++pos;
-    ++i;
-  }
-
-  cpy_str(date, tmp_date);
-  ++pos;
-
 	return 1;
 }
 
@@ -135,14 +105,120 @@ count_args(const char to_count[])
 }
 
 int Task::
-verify_args(char to_verify[])
+add_course(char* & to_parse, int offset)
 {
-	// Check course 
-	return 0;
+  int i = 0;
+  char tmp[CRSLEN] = {};
+  field_loc[0] = offset;
+
+  while(to_parse[offset] != '|')
+  {
+    tmp[i] = to_parse[offset];
+    ++offset;
+    ++i;
+  }
+  cpy_str(course, tmp);
+  return ++offset;
 }
 
-void Task::cpy_str(char *& dest, char source[])
+int Task::
+add_title(char* & to_parse, int offset)
 {
-	dest = new char[strlen(source) + 1];
-	strcpy(dest, source);
+  int i = 0;
+  char tmp[TTLLEN] = {};
+  field_loc[1] = offset;
+
+  while(to_parse[offset] != '|')
+  {
+    tmp[i] = to_parse[offset];
+    ++offset;
+    ++i;
+  }
+  cpy_str(title, tmp);
+  return ++offset;
+}
+
+int Task::
+add_type(char* & to_parse, int offset)
+{
+  int i = 0;
+  char tmp[TYPLEN] = {};
+  field_loc[2] = offset;
+
+  while(to_parse[offset] != '|')
+  {
+    tmp[i] = to_parse[offset];
+    ++offset;
+    ++i;
+  }
+
+  cpy_str(type, tmp);
+  return ++offset;
+}
+
+int Task::
+add_date(char* & to_parse, int offset)
+{
+  int i = 0;
+  char tmp[DATLEN] = {};
+  field_loc[3] = offset;
+
+  while(to_parse[offset] != '|')
+  {
+    tmp[i] = to_parse[offset];
+    ++offset;
+    ++i;
+  }
+
+  if(date_parse(tmp) == 0)
+    error("INVALID DATE, YOU ENTERED: ", tmp);
+  return ++offset;
+}
+
+int Task::
+date_parse(char to_parse[])
+{
+  using std::atoi;
+
+  char mon[3] = {};
+  char day[3] = {};
+  char year[3] = {};
+
+  int temp_mon, temp_day, temp_year = 0;
+  int i = 0;
+
+  for(int m = 0; m < 2; ++m)
+  {
+    mon[m] = to_parse[i];
+    ++i;
+  }
+
+  for(int d = 0; d < 2; ++d)
+  {
+    day[d] = to_parse[i];
+    ++i;
+  }
+  
+  for(int y = 0; y < 2; ++y)
+  {
+    year[y] = to_parse[i];
+    ++i;
+  }
+
+  temp_mon = atoi(mon);
+  temp_day = atoi(day);
+  temp_year = atoi(year);
+
+  if(temp_mon > 12 || temp_mon < 1)
+    return 0;
+  if(temp_day > 31 || temp_day < 1)
+    return 0;
+  if(temp_year > 99 || temp_year < 1)
+    return 0;
+
+  date[0] = atoi(mon);
+  date[1] = atoi(day);
+  date[2] = atoi(year);
+
+  return 1;
 }

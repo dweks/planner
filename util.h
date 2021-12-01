@@ -1,39 +1,30 @@
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <cstring>
-#include <cctype>
-using std::cout;
-using std::cin;
-using std::cerr;
-using std::endl;
-using std::ofstream;
-using std::ifstream;
-using std::ios;
-#define MAXWIDTH 56
-#define DEFAULTCH '-'
-#define INPUT 50
-#define CRSLEN 8
+#include "preproc.h"
 
 class Util
 {
 	public:
 		Util();
 		~Util();
+
 		// Functional
 		void cpy_str(char *& dest, char source[], int offset = 0);
-		bool confirm();
-		// Visual
+		bool confirm(const char msg[] = "");
+    bool cin_fail();
+
+		// Heading
+		void header(const char text[], const char ch = '-');
+		void pg_title(const char text[], const char ch = '=');
 		void line(char ch = DEFAULTCH, int len = MAXWIDTH, bool own_line = true) const;
+
+    // Alignment
+		void ralign(const char to_align[]);
 		void spacer(const int len);
 		void center(const char to_center[], bool own_line = true);
-		void header(const char text[], const char ch = '-');
-		void ralign(const char to_align[]);
-		// Informational
-		void pg_title(const char text[], const char ch = '=');
-		void error(const char err_msg[]);
-		void show_entry(const char entry_to_print[]);
-		void instr(const char msg[]);
-		void success(const char succ_msg[]);
-};
 
+		// Informational
+		void error(const char msg[], const char sub_msg[] = "");
+		void warning(const char msg[], const char sub_msg[] = "");
+		void success(const char msg[], const char sub_msg[] = "");
+		void instr(const char msg[], const char sub_msg[] = "");
+    void get_today(int to_fill[]);
+};
